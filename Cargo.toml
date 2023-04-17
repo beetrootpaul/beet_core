@@ -14,5 +14,6 @@ license = "MIT OR Apache-2.0"
 name = "minimal"
 
 [dependencies]
+pixels = "0.12.1"
 # TODO: fine-control features
 winit = "0.28.3"
