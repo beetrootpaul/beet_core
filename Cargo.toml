@@ -11,10 +11,84 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[example]]
-name = "minimal"
+name = "tmp"
 
 [dependencies]
 # TODO: fine-control features
 pixels = "0.12.1"
 # TODO: fine-control features
 winit = "0.28.3"
+# TODO:             Features:
+#             + mio
+#             + percent-encoding
+#             + sctk
+#             + sctk-adwaita
+#             + wayland
+#             + wayland-client
+#             + wayland-commons
+#             + wayland-csd-adwaita
+#             + wayland-dlopen
+#             + wayland-protocols
+#             + x11
+#             + x11-dl
+#             - android-game-activity
+#             - android-native-activity
+#             - mint
+#             - serde
+#             - wayland-csd-adwaita-crossfont
+#             - wayland-csd-adwaita-notitle
+
+# TODO: remove as much as possible
+[dev-dependencies]
+byteorder = "1.4.3"
+# TODO:              Features:
+#             + std
+#             - i128
+env_logger = "0.10.0"
+# TODO:              Features:
+#             + auto-color
+#             + color
+#             + humantime
+#             + regex
+error-iter = "0.4.1"
+getrandom = "0.2.9"
+# TODO:              Features:
+#             - compiler_builtins
+#             - core
+#             - custom
+#             - js
+#             - js-sys
+#             - rdrand
+#             - rustc-dep-of-std
+#             - std
+#             - test-in-browser
+#             - wasm-bindgen
+line_drawing = "1.0.0"
+log = "0.4.17"
+# TODO:              Features:
+#             - kv_unstable
+#             - kv_unstable_serde
+#             - kv_unstable_std
+#             - kv_unstable_sval
+#             - max_level_debug
+#             - max_level_error
+#             - max_level_info
+#             - max_level_off
+#             - max_level_trace
+#             - max_level_warn
+#             - release_max_level_debug
+#             - release_max_level_error
+#             - release_max_level_info
+#             - release_max_level_off
+#             - release_max_level_trace
+#             - release_max_level_warn
+#             - serde
+#             - std
+#             - sval
+#             - value-bag
+randomize = "3.0.1"
+# TODO:              Features:
+#             - rand_core
+#             - serde
+winit_input_helper = "0.14.1"
+

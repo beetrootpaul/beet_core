@@ -1,3 +1,11 @@
+# # # # # # #
+# variables
+#
+
+rust_flags_release := RUSTFLAGS="-D warnings"
+
+rust_log_debug := RUST_LOG=debug
+
 # # # # # # # # # # #
 # initial commands
 #
@@ -12,9 +20,13 @@ setup:
 format:
 	cargo fmt
 
-check: clippy
+check:
+	cargo clippy --examples
+	cargo clippy --examples --release
 
-run: run_example_minimal
+run: run_example_tmp
+
+run_release: run_example_tmp_release
 
 # # # # # # # # # # # # #
 # specialized commands
@@ -26,13 +38,12 @@ update_rust_toolchain:
 clean_up:
 	cargo clean
 
-clippy:
-	cargo clippy --examples
-	cargo clippy --examples --release
-
 # # # # # # # # #
 # run commands
 #
 
-run_example_minimal:
-	cargo run --example minimal
+# TODO: rename this example package
+run_example_tmp:
+	$(rust_log_debug) cargo run --example tmp
+run_example_tmp_release:
+	$(rust_flags_release) cargo run --example tmp --release
