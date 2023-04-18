@@ -11,6 +11,9 @@ Cargo.lock
 # output from Cargo
 /target/
 
+# output from wasm-bindgen CLI
+/examples/**/wasm-bindgen-output/
+
 # # # # #
 # other
 #
