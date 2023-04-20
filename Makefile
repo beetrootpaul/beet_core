@@ -20,10 +20,9 @@ setup:
 # main commands
 #
 
-format:
+polish:
+	cargo clippy --examples --fix
 	cargo fmt
-
-check:
 	cargo clippy --examples
 	cargo clippy --examples --release
 
