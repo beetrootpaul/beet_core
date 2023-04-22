@@ -4,7 +4,8 @@
 
 rust_flags_release := RUSTFLAGS="-D warnings"
 
-rust_log_debug := RUST_LOG=debug,wgpu_core=info
+# TODO: rename this example package
+rust_log_debug := RUST_LOG=info,tmp=trace
 
 # # # # # # # # # # #
 # initial commands

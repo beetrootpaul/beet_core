@@ -2,13 +2,10 @@
 
 // TODO: REWORK THIS FILE
 
-#![deny(clippy::all)]
-#![forbid(unsafe_code)]
-
 use std::rc::Rc;
 
 use error_iter::ErrorIter as _;
-use log::{debug, error, trace};
+use log::{debug, error, info, trace, warn};
 use pixels::{Pixels, SurfaceTexture};
 use winit::{
     dpi::LogicalSize,
@@ -20,8 +17,8 @@ use winit_input_helper::WinitInputHelper;
 
 use beet_core::BeetCore;
 
-const WIDTH: u32 = 400;
-const HEIGHT: u32 = 300;
+const WIDTH: u32 = 80;
+const HEIGHT: u32 = 60;
 
 // TODO: rename this example package
 
@@ -36,17 +33,14 @@ const HEIGHT: u32 = 300;
 fn main() {
     #[cfg(target_arch = "wasm32")]
     {
-        std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-        // TODO: configure log level from outside the code and per debug vs release
-        console_log::init_with_level(log::Level::Warn).expect("error initializing logger");
-
+        console_error_panic_hook::set_once();
+        // TODO: use in debug only due to size impact https://docs.rs/console_log/1.0.0/console_log/#code-size
+        console_log::init_with_level(log::Level::Warn).expect("should initialize logger");
         wasm_bindgen_futures::spawn_local(run());
     }
-
     #[cfg(not(target_arch = "wasm32"))]
     {
         env_logger::init();
-
         pollster::block_on(run());
     }
 
@@ -55,6 +49,15 @@ fn main() {
 }
 
 async fn run() {
+    let a = 6_i32;
+    let mut b = 2_i32;
+    b -= 1;
+    trace!("{}", a / b);
+    info!("{}", a / b);
+    debug!("{}", a / b);
+    warn!("{}", a / b);
+    error!("{}", a / b);
+
     let event_loop = EventLoop::new();
 
     let window = {
@@ -193,7 +196,7 @@ async fn run() {
                 .unwrap_or_default();
 
             if input.mouse_pressed(0) {
-                debug!("=============== Mouse click at {mouse_cell:?}");
+                warn!("=============== Mouse click at {mouse_cell:?}");
                 draw_state = Some(life.toggle(mouse_cell.0, mouse_cell.1));
             } else if let Some(draw_alive) = draw_state {
                 let release = input.mouse_released(0);

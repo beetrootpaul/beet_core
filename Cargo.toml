@@ -44,17 +44,6 @@ byteorder = "1.4.3"
 # TODO:              Features:
 #             + std
 #             - i128
-console_error_panic_hook = "0.1.7"
-console_log = "1.0.0"
-# TODO:              Features:
-#             - color
-#             - wasm-bindgen
-env_logger = "0.10.0"
-# TODO:              Features:
-#             + auto-color
-#             + color
-#             + humantime
-#             + regex
 error-iter = "0.4.1"
 getrandom = { version = "0.2.9", features = ["js"] }
 # TODO:              Features:
@@ -91,10 +80,6 @@ log = "0.4.17"
 #             - std
 #             - sval
 #             - value-bag
-pollster = "0.3.0"
-# TODO:              Features:
-#             - macro
-#             - pollster-macro
 randomize = "3.0.1"
 # TODO:              Features:
 #             - rand_core
@@ -109,10 +94,6 @@ wasm-bindgen = "0.2.84"
 #             - serde_json
 #             - strict-macro
 #             - xxx_debug_only_print_generated_code
-wasm-bindgen-futures = "0.4.34"
-# TODO:              Features:
-#             - futures-core
-#             - futures-core-03-stream
 web-sys = { version = "0.3.61", features = ["GpuTextureFormat"] }
 # TODO:              Features:
 #             - AbortController
@@ -1642,3 +1623,14 @@ web-sys = { version = "0.3.61", features = ["GpuTextureFormat"] }
 #             - gpu_texture_usage
 winit_input_helper = "0.14.1"
 
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+console_error_panic_hook = "0.1.7"
+console_log = { version = "1.0.0", default-features = false, features = ["color"] }
+wasm-bindgen-futures = "0.4.34"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+env_logger = { version = "0.10.0", default-features = false, features = ["auto-color", "humantime"] }
+pollster = "0.3.0"
+# TODO:              Features:
+#             - macro
+#             - pollster-macro
