@@ -45,6 +45,7 @@ clean_up:
 # examples
 #
 
+# TODO: move a lot of those shell commands to Cargo custom build scripts maybe?
 # TODO: rename this example package
 run_example_tmp_debug:
 	cargo build --example tmp
@@ -55,6 +56,7 @@ run_example_tmp_debug:
 		--no-typescript \
 		--out-dir ./examples/tmp/wasm-bindgen-output/debug/ \
 		target/wasm32-unknown-unknown/debug/examples/tmp.wasm
+	cp ./examples/tmp/index.css  ./examples/tmp/wasm-bindgen-output/debug/index.css
 	cp ./examples/tmp/index.html ./examples/tmp/wasm-bindgen-output/debug/index.html
 	# TODO: [ERROR] Route /favicon.ico could not be found
 	# TODO: How to pass proper RUST_LOG here?
@@ -70,6 +72,7 @@ run_example_tmp_release:
 		--no-typescript \
 		--out-dir ./examples/tmp/wasm-bindgen-output/release/ \
 		target/wasm32-unknown-unknown/release/examples/tmp.wasm
+	cp ./examples/tmp/index.css  ./examples/tmp/wasm-bindgen-output/release/index.css
 	cp ./examples/tmp/index.html ./examples/tmp/wasm-bindgen-output/release/index.html
 	# TODO: [ERROR] Route /favicon.ico could not be found
 	# TODO: How to pass proper RUST_LOG here?

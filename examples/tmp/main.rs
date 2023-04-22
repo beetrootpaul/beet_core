@@ -5,10 +5,11 @@
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-// use error_iter::ErrorIter as _;
 use log::{debug, error, warn};
 use pixels::{Pixels, SurfaceTexture};
 use wasm_bindgen::JsCast;
+use winit::dpi::LogicalPosition;
+use winit::event::VirtualKeyCode;
 use winit::platform::web::WindowBuilderExtWebSys;
 use winit::{
     dpi::LogicalSize,
@@ -20,25 +21,10 @@ use winit_input_helper::WinitInputHelper;
 
 use beet_core::BeetCore;
 
-// use winit::platform::web::WindowExtWebSys;
-
-// use winit::platform::web::WindowBuilderExtWebSys;
-
 // TODO: rename this example package
 fn main() {
     // TODO: change this
     BeetCore::hello();
-
-    // TODO: ???
-    // let mut game_app = GameApp::new(GameOptions {
-    //     window_title: "Beet Core: \"Minimal\" example".to_string(),
-    //     // TODO: use glam for vectors instead of separaete w and h
-    //     canvas_width: 64,
-    //     canvas_height: 32,
-    //     canvas_scale: 8,
-    //     // TODO: replace it with ID selector
-    //     html_canvas_selector: ".tmp-canvas".to_string(),
-    // });
 
     run_wrapper::<TmpGame>();
 }
@@ -65,12 +51,12 @@ impl GameApp for TmpGame {
     fn options() -> GameOptions {
         GameOptions {
             window_title: "Beet Core: \"Minimal\" example".to_string(),
-            // TODO: use glam for vectors instead of separaete w and h
+            // TODO: use glam for vectors instead of separate w and h
             canvas_width: 64,
             canvas_height: 32,
             canvas_scale: 8,
-            // TODO: replace it with ID selector
-            html_canvas_selector: ".tmp-canvas".to_string(),
+            // TODO: better example name
+            html_canvas_selector: "#tmp-canvas".to_string(),
         }
     }
 
@@ -83,7 +69,7 @@ impl GameApp for TmpGame {
         self.blue = (self.blue as i32 + if self.blue_up { 1 } else { -1 }) as u8;
 
         self.iters += 10;
-        if self.iters > 20_000 {
+        if self.iters > 1_000 {
             self.iters = 10;
         }
         self.red_px += 1;
@@ -95,7 +81,7 @@ impl GameApp for TmpGame {
     fn draw(&mut self, draw_api: &mut DrawApi) {
         web_sys::console::log_1(&format!("it {}", self.iters).into());
         for _ in 0..self.iters {
-            draw_api.fill([0x00, 0x00, self.blue, 0xff]);
+            draw_api.fill([0x00, 0xff - self.blue, self.blue, 0xff]);
         }
         draw_api.set_px(self.red_px, [0xff, 0x00, 0x00, 0xff]);
     }
@@ -216,8 +202,8 @@ async fn run<A: GameApp + 'static>() {
                 options.canvas_height as f64,
             ))
             .with_canvas(Some(canvas))
-            // TODO: from Bevy: https://github.com/bevyengine/bevy/blob/6dda873ddca620f75a1e38d06c3b6c0551f6da5c/crates/bevy_winit/src/winit_windows.rs#L141
-            // .with_prevent_default(???)
+            // Argument for a `false` below: otherwise Cmd+Opt+I doesn't open dev tools when focused on the <canvas>
+            .with_prevent_default(false)
             .build(&event_loop)
             .expect("should build a winit window")
     };
@@ -260,10 +246,7 @@ async fn run<A: GameApp + 'static>() {
     };
     let mut draw_api = DrawApi::new(pixels);
 
-    // let mut life = ConwayGrid::new_random(CANVAS_WIDTH as usize, CANVAS_HEIGHT as usize);
-    // let mut paused = false;
-
-    // let mut draw_state: Option<bool> = None;
+    let mut paused = false;
 
     // TODO: use `if window_id == window.id()` match branch condition
 
@@ -298,7 +281,9 @@ async fn run<A: GameApp + 'static>() {
                     error!("LONG UPDATE: {} >> {}", accumulated_delta, EXPECTED_DELTA);
                 }
 
-                game_app.update();
+                if !paused {
+                    game_app.update();
+                }
 
                 if accumulated_delta < 2.0 * EXPECTED_DELTA {
                     game_app.draw(&mut draw_api);
@@ -336,9 +321,9 @@ async fn run<A: GameApp + 'static>() {
             //     return;
             // }
 
-            // if input.key_pressed(VirtualKeyCode::P) {
-            //     paused = !paused;
-            // }
+            if input.key_pressed(VirtualKeyCode::P) {
+                paused = !paused;
+            }
             // if input.key_pressed_os(VirtualKeyCode::Space) {
             // Space is frame-step, so ensure we're paused
             // paused = true;
@@ -370,32 +355,6 @@ async fn run<A: GameApp + 'static>() {
             //     })
             //     .unwrap_or_default();
 
-            // if input.mouse_pressed(0) {
-            //     warn!("=============== Mouse click at {mouse_cell:?}");
-            //     draw_state = Some(life.toggle(mouse_cell.0, mouse_cell.1));
-            // } else if let Some(draw_alive) = draw_state {
-            //     let release = input.mouse_released(0);
-            //     let held = input.mouse_held(0);
-            //     debug!("=============== Draw at {mouse_prev_cell:?} => {mouse_cell:?}");
-            //     debug!("=============== Mouse held {held:?}, release {release:?}");
-            // If they either released (finishing the drawing) or are still
-            // in the middle of drawing, keep going.
-            // if release || held {
-            //     debug!("=============== Draw line of {draw_alive:?}");
-            //     life.set_line(
-            //         mouse_prev_cell.0,
-            //         mouse_prev_cell.1,
-            //         mouse_cell.0,
-            //         mouse_cell.1,
-            //         draw_alive,
-            //     );
-            // }
-            // If they let go or are otherwise not clicking anymore, stop drawing.
-            // if release || !held {
-            //     debug!("=============== Draw end");
-            //     draw_state = None;
-            // }
-            // }
             // Resize the window
             // if let Some(size) = input.window_resized() {
             //     if let Err(err) = pixels.resize_surface(size.width, size.height) {

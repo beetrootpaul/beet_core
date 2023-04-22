@@ -1,0 +1,46 @@
+/*
+ * Let's make canvas fill entire <iframe> within which the game is embedded
+ */
+
+html {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    height: 100%;
+    margin: 0;
+}
+
+#tmp-canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* TODO: ??? */
+/*
+ * Fix for iOS to not select canvas on a long press.
+ * Based on: https://forum.babylonjs.com/t/prevent-unwanted-inputs-in-ios-safari-hold-click-selects-canvas/21409/4
+ */
+
+/* TODO: ??? */
+/*html, body {*/
+/*    touch-action: none;*/
+/*    -webkit-touch-callout: none;*/
+/*    -webkit-user-select: none;*/
+/*    -khtml-user-select: none;*/
+/*    -moz-user-select: none;*/
+/*    -ms-user-select: none;*/
+/*    user-select: none;*/
+/*    outline: none;*/
+/*}*/
+
+/* TODO: ??? */
+/*
+ * Other settings
+ */
+
+/* TODO: ??? */
+/*#hen_rescue_hero__canvas {*/
+/*    touch-action: none;*/
+/*}*/
