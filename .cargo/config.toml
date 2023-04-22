@@ -1,0 +1,5 @@
+[build]
+# Uncomment this line to make WASM the deafult target and, thanks to it,
+# enabled full IDE functionality for `#[cfg(target_arch = "wasm32")]` conditional
+# code. Do not commit it to the repo.
+#target = "wasm32-unknown-unknown"

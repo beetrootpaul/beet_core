@@ -1,5 +1,3 @@
-// TODO: wasm target (with working logging)
-
 // TODO: REWORK THIS FILE
 
 use std::rc::Rc;
@@ -17,18 +15,13 @@ use winit_input_helper::WinitInputHelper;
 
 use beet_core::BeetCore;
 
-const WIDTH: u32 = 80;
-const HEIGHT: u32 = 60;
-
 // TODO: rename this example package
 
-// TODO: reuse this
-// const WINDOW_TITLE: &str = "Beet Core: \"Minimal\" example";
-// const CANVAS_WIDTH: u32 = 64;
-// const CANVAS_HEIGHT: u32 = 32;
-// const CANVAS_SCALE: u32 = 8;
-// const WINDOW_SIZE: LogicalSize<u32> =
-//     LogicalSize::new(CANVAS_WIDTH * CANVAS_SCALE, CANVAS_HEIGHT * CANVAS_SCALE);
+const WINDOW_TITLE: &str = "Beet Core: \"Minimal\" example";
+// TODO: use glam
+const CANVAS_WIDTH: u32 = 64;
+const CANVAS_HEIGHT: u32 = 32;
+const CANVAS_SCALE: u32 = 8;
 
 fn main() {
     #[cfg(target_arch = "wasm32")]
@@ -49,49 +42,41 @@ fn main() {
 }
 
 async fn run() {
-    let a = 6_i32;
-    let mut b = 2_i32;
-    b -= 1;
-    trace!("{}", a / b);
-    info!("{}", a / b);
-    debug!("{}", a / b);
-    warn!("{}", a / b);
-    error!("{}", a / b);
-
     let event_loop = EventLoop::new();
 
     let window = {
-        let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
-        let scaled_size = LogicalSize::new(WIDTH as f64 * 3.0, HEIGHT as f64 * 3.0);
         WindowBuilder::new()
-            .with_title("Conway's Game of Life")
-            .with_inner_size(scaled_size)
-            .with_min_inner_size(size)
+            .with_title(WINDOW_TITLE)
+            .with_inner_size(LogicalSize::new(
+                (CANVAS_WIDTH * CANVAS_SCALE) as f64,
+                (CANVAS_HEIGHT * CANVAS_SCALE) as f64,
+            ))
+            .with_min_inner_size(LogicalSize::new(CANVAS_WIDTH as f64, CANVAS_HEIGHT as f64))
             .build(&event_loop)
-            .unwrap()
+            .expect("should build a winit window")
     };
     let window = Rc::new(window);
 
     #[cfg(target_arch = "wasm32")]
     {
-        use wasm_bindgen::JsCast;
-        use winit::platform::web::WindowExtWebSys;
+        // use wasm_bindgen::JsCast;
+        // use winit::platform::web::WindowExtWebSys;
 
         // Retrieve current width and height dimensions of browser client window
-        let get_window_size = || {
-            let client_window = web_sys::window().unwrap();
-            LogicalSize::new(
-                client_window.inner_width().unwrap().as_f64().unwrap(),
-                client_window.inner_height().unwrap().as_f64().unwrap(),
-            )
-        };
+        // let get_window_size = || {
+        //     let client_window = web_sys::window().unwrap();
+        //     LogicalSize::new(
+        //         client_window.inner_width().unwrap().as_f64().unwrap(),
+        //         client_window.inner_height().unwrap().as_f64().unwrap(),
+        //     )
+        // };
 
-        let window = Rc::clone(&window);
+        // let window = Rc::clone(&window);
 
         // Initialize winit window with current dimensions of browser client
-        window.set_inner_size(get_window_size());
+        // window.set_inner_size(get_window_size());
 
-        let client_window = web_sys::window().unwrap();
+        // let client_window = web_sys::window().unwrap();
 
         // Attach winit canvas to body element
         web_sys::window()
@@ -101,18 +86,18 @@ async fn run() {
                 body.append_child(&web_sys::Element::from(window.canvas()))
                     .ok()
             })
-            .expect("couldn't append canvas to document body");
+            .expect("should append <canvas> to HTML document body");
 
         // Listen for resize event on browser client. Adjust winit window dimensions
         // on event trigger
-        let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move |_e: web_sys::Event| {
-            let size = get_window_size();
-            window.set_inner_size(size)
-        }) as Box<dyn FnMut(_)>);
-        client_window
-            .add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref())
-            .unwrap();
-        closure.forget();
+        // let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move |_e: web_sys::Event| {
+        //     let size = get_window_size();
+        //     window.set_inner_size(size)
+        // }) as Box<dyn FnMut(_)>);
+        // client_window
+        //     .add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref())
+        //     .unwrap();
+        // closure.forget();
     }
 
     let mut input = WinitInputHelper::new();
@@ -121,12 +106,12 @@ async fn run() {
         let window_size = window.inner_size();
         let surface_texture =
             SurfaceTexture::new(window_size.width, window_size.height, window.as_ref());
-        Pixels::new_async(WIDTH, HEIGHT, surface_texture)
+        Pixels::new_async(CANVAS_WIDTH, CANVAS_HEIGHT, surface_texture)
             .await
             .expect("Pixels error")
     };
 
-    let mut life = ConwayGrid::new_random(WIDTH as usize, HEIGHT as usize);
+    let mut life = ConwayGrid::new_random(CANVAS_WIDTH as usize, CANVAS_HEIGHT as usize);
     let mut paused = false;
 
     let mut draw_state: Option<bool> = None;

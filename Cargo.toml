@@ -1631,6 +1631,3 @@ wasm-bindgen-futures = "0.4.34"
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 env_logger = { version = "0.10.0", default-features = false, features = ["auto-color", "humantime"] }
 pollster = "0.3.0"
-# TODO:              Features:
-#             - macro
-#             - pollster-macro
