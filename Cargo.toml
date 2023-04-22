@@ -20,7 +20,6 @@ name = "tmp"
 console_error_panic_hook = "0.1.7"
 # TODO: include in debug only due to size impact https://docs.rs/console_log/1.0.0/console_log/#code-size
 console_log = { version = "1.0.0", default-features = false, features = ["color"] }
-error-iter = "0.4.1"
 log = "0.4.17"
 pixels = { version = "0.12.1", default-features = false }
 wasm-bindgen = { version = "0.2.84", default-features = false }

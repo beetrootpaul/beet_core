@@ -5,10 +5,10 @@
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-use error_iter::ErrorIter;
-use log::{debug, error, warn, Log};
+use log::{debug, error, warn};
 use pixels::{wgpu, Pixels, SurfaceTexture};
 use wasm_bindgen::JsCast;
+#[cfg(debug_assertions)]
 use winit::event::VirtualKeyCode;
 use winit::platform::web::WindowBuilderExtWebSys;
 use winit::{
@@ -245,6 +245,7 @@ async fn run<A: GameApp + 'static>() {
 
     let mut draw_api = DrawApi::new();
 
+    #[allow(unused_mut)]
     let mut debug_pause = false;
 
     let mut input = WinitInputHelper::new();
