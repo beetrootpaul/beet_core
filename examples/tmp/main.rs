@@ -5,10 +5,10 @@
 use std::collections::VecDeque;
 use std::rc::Rc;
 
+use error_iter::ErrorIter;
 use log::{debug, error, warn, Log};
-use pixels::{Pixels, SurfaceTexture};
+use pixels::{wgpu, Pixels, SurfaceTexture};
 use wasm_bindgen::JsCast;
-use web_sys::Window;
 use winit::event::VirtualKeyCode;
 use winit::platform::web::WindowBuilderExtWebSys;
 use winit::{
@@ -210,29 +210,39 @@ async fn run<A: GameApp + 'static>() {
     };
     let winit_window = Rc::new(winit_window);
 
-    {
-        let winit_window = Rc::clone(&winit_window);
-        winit_window.set_inner_size(get_html_window_size());
+    let winit_window_clone_1 = Rc::clone(&winit_window);
+    winit_window_clone_1.set_inner_size(get_html_window_size());
 
-        // Copy-pasted from https://github.com/parasyte/pixels/blob/main/examples/minimal-web/src/main.rs#L90-L97
-        let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move |_e: web_sys::Event| {
-            winit_window.set_inner_size(get_html_window_size())
-        }) as Box<dyn FnMut(_)>);
-        web_sys::window()
-            .unwrap()
-            .add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref())
-            .unwrap();
-        closure.forget();
-    }
+    // Copy-pasted from https://github.com/parasyte/pixels/blob/main/examples/minimal-web/src/main.rs#L90-L97
+    let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move |_e: web_sys::Event| {
+        winit_window_clone_1.set_inner_size(get_html_window_size())
+    }) as Box<dyn FnMut(_)>);
+    web_sys::window()
+        .unwrap()
+        .add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref())
+        .unwrap();
+    closure.forget();
 
+    let winit_window_clone_2 = Rc::clone(&winit_window);
     let mut pixels = {
-        let window_size = winit_window.inner_size();
-        let surface_texture =
-            SurfaceTexture::new(window_size.width, window_size.height, winit_window.as_ref());
+        let window_size = winit_window_clone_2.inner_size();
+        let surface_texture = SurfaceTexture::new(
+            window_size.width,
+            window_size.height,
+            winit_window_clone_2.as_ref(),
+        );
         Pixels::new_async(options.canvas_width, options.canvas_height, surface_texture)
             .await
             .expect("should create `pixels` instance")
     };
+    // TODO: set from the outside
+    pixels.clear_color(wgpu::Color {
+        r: 1.0,
+        g: 0.5,
+        b: 0.2,
+        a: 1.0,
+    });
+
     let mut draw_api = DrawApi::new();
 
     let mut debug_pause = false;
@@ -291,7 +301,7 @@ async fn run<A: GameApp + 'static>() {
                     }
 
                     if let Err(err) = pixels.render() {
-                        log_error("pixels.render", err);
+                        error!("failed to render pixels: {}", err.to_string());
                         *control_flow = ControlFlow::Exit;
                         return;
                     }
@@ -326,24 +336,14 @@ async fn run<A: GameApp + 'static>() {
             }
 
             if let Some(size) = input.window_resized() {
-                // TODO: ???
-                error!("NEW size: {}x{}", size.width, size.height);
-                // if let Err(err) = pixels.resize_surface(size.width, size.height) {
-                //     log_error("pixels.resize_surface", err);
-                //     *control_flow = ControlFlow::Exit;
-                //     return;
-                // }
+                if let Err(err) = pixels.resize_surface(size.width, size.height) {
+                    error!("failed to resize the surface: {}", err.to_string());
+                    *control_flow = ControlFlow::Exit;
+                    return;
+                }
             }
 
             winit_window.request_redraw();
         }
     });
-}
-
-// TODO: ???
-fn log_error<E: std::error::Error + 'static>(method_name: &str, err: E) {
-    error!("{method_name}() failed: {err}");
-    //     for source in err.sources().skip(1) {
-    //         error!("  Caused by: {source}");
-    //     }
 }
