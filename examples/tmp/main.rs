@@ -214,6 +214,7 @@ async fn run<A: GameApp + 'static>() {
         let winit_window = Rc::clone(&winit_window);
         winit_window.set_inner_size(get_html_window_size());
 
+        // Copy-pasted from https://github.com/parasyte/pixels/blob/main/examples/minimal-web/src/main.rs#L90-L97
         let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move |_e: web_sys::Event| {
             winit_window.set_inner_size(get_html_window_size())
         }) as Box<dyn FnMut(_)>);
