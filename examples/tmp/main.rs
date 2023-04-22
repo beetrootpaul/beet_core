@@ -5,9 +5,10 @@
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-use log::{debug, error, warn};
+use log::{debug, error, warn, Log};
 use pixels::{Pixels, SurfaceTexture};
 use wasm_bindgen::JsCast;
+use web_sys::Window;
 use winit::event::VirtualKeyCode;
 use winit::platform::web::WindowBuilderExtWebSys;
 use winit::{
@@ -106,7 +107,6 @@ trait GameApp {
 
 struct DrawApi {
     deque: VecDeque<DrawCmd>,
-    pixels: Pixels,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -124,16 +124,14 @@ impl DrawApi {
         self.deque.push_back(DrawCmd::SetPx(target, color));
     }
 
-    fn execute(&mut self, cmd: DrawCmd) {
+    fn execute(&mut self, cmd: DrawCmd, screen: &mut [u8]) {
         match cmd {
             DrawCmd::Fill(color) => {
-                let screen = self.pixels.frame_mut();
                 for pix in screen.chunks_exact_mut(4) {
                     pix.copy_from_slice(&color);
                 }
             },
             DrawCmd::SetPx(target, color) => {
-                let screen = self.pixels.frame_mut();
                 screen[target * 4] = color[0];
                 screen[target * 4 + 1] = color[1];
                 screen[target * 4 + 2] = color[2];
@@ -141,16 +139,11 @@ impl DrawApi {
             },
         }
     }
-
-    fn render(&self) -> Result<(), pixels::Error> {
-        self.pixels.render()
-    }
 }
 
 impl DrawApi {
-    fn new(pixels: Pixels) -> Self {
+    fn new() -> Self {
         Self {
-            pixels,
             deque: VecDeque::new(),
         }
     }
@@ -166,6 +159,14 @@ fn run_wrapper<A: GameApp + 'static>() {
     wasm_bindgen_futures::spawn_local(run::<A>());
 }
 
+fn get_html_window_size() -> LogicalSize<f64> {
+    let html_window = web_sys::window().unwrap();
+    LogicalSize::new(
+        html_window.inner_width().unwrap().as_f64().unwrap(),
+        html_window.inner_height().unwrap().as_f64().unwrap(),
+    )
+}
+
 async fn run<A: GameApp + 'static>() {
     let mut game_app = A::init();
     let options = A::options();
@@ -174,9 +175,9 @@ async fn run<A: GameApp + 'static>() {
 
     let winit_window = {
         let canvas_candidates = web_sys::window()
-            .and_then(|window| window.document())
-            .and_then(|document| {
-                document
+            .and_then(|html_window| html_window.document())
+            .and_then(|html_document| {
+                html_document
                     .query_selector_all(&options.html_canvas_selector)
                     .ok()
             })
@@ -209,34 +210,21 @@ async fn run<A: GameApp + 'static>() {
     };
     let winit_window = Rc::new(winit_window);
 
-    // Retrieve current width and height dimensions of browser client window
-    // let get_window_size = || {
-    //     let client_window = web_sys::window().unwrap();
-    //     LogicalSize::new(
-    //         client_window.inner_width().unwrap().as_f64().unwrap(),
-    //         client_window.inner_height().unwrap().as_f64().unwrap(),
-    //     )
-    // };
+    {
+        let winit_window = Rc::clone(&winit_window);
+        winit_window.set_inner_size(get_html_window_size());
 
-    // let winit_window = Rc::clone(&window);
+        let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move |_e: web_sys::Event| {
+            winit_window.set_inner_size(get_html_window_size())
+        }) as Box<dyn FnMut(_)>);
+        web_sys::window()
+            .unwrap()
+            .add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref())
+            .unwrap();
+        closure.forget();
+    }
 
-    // Initialize winit window with current dimensions of browser client
-    // window.set_inner_size(get_window_size());
-
-    // let client_window = web_sys::window().unwrap();
-
-    // Listen for resize event on browser client. Adjust winit window dimensions
-    // on event trigger
-    // let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move |_e: web_sys::Event| {
-    //     let size = get_window_size();
-    //     window.set_inner_size(size)
-    // }) as Box<dyn FnMut(_)>);
-    // client_window
-    //     .add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref())
-    //     .unwrap();
-    // closure.forget();
-
-    let pixels = {
+    let mut pixels = {
         let window_size = winit_window.inner_size();
         let surface_texture =
             SurfaceTexture::new(window_size.width, window_size.height, winit_window.as_ref());
@@ -244,17 +232,15 @@ async fn run<A: GameApp + 'static>() {
             .await
             .expect("should create `pixels` instance")
     };
-    let mut draw_api = DrawApi::new(pixels);
+    let mut draw_api = DrawApi::new();
 
     let mut debug_pause = false;
-
-    // TODO: use `if window_id == window.id()` match branch condition
 
     let mut input = WinitInputHelper::new();
 
     const EXPECTED_DELTA: f64 = 1000.0 / 60.0;
     let performance = web_sys::window()
-        .and_then(|window| window.performance())
+        .and_then(|html_window| html_window.performance())
         .expect("should be able to access `window.performance`");
 
     // process 1st frame w/o wait
@@ -296,14 +282,14 @@ async fn run<A: GameApp + 'static>() {
                     game_app.draw(&mut draw_api);
 
                     while let Some(cmd) = draw_api.deque.pop_front() {
-                        draw_api.execute(cmd);
+                        draw_api.execute(cmd, pixels.frame_mut());
                         // TODO: interleave drawing with updates to avoid delayed update after
                         //       each long draw. For example count in the main update loop how many
                         //       updates we need to perform, then perform them here. It might be
                         //       important for avoiding collision logic issues etc.
                     }
 
-                    if let Err(err) = draw_api.render() {
+                    if let Err(err) = pixels.render() {
                         log_error("pixels.render", err);
                         *control_flow = ControlFlow::Exit;
                         return;
@@ -318,7 +304,6 @@ async fn run<A: GameApp + 'static>() {
 
         // For everything else, for let winit_input_helper collect events to build its state.
         // It returns `true` when it is time to update our game state and request a redraw.
-        warn!("???");
         if input.update(&event) {
             // TODO: make it configurable from the outside
             // This allows to stop the game in a browser just by pressing Esc
@@ -339,14 +324,15 @@ async fn run<A: GameApp + 'static>() {
                 debug_pause = true;
             }
 
-            // Resize the window
-            // if let Some(size) = input.window_resized() {
-            //     if let Err(err) = pixels.resize_surface(size.width, size.height) {
-            //         log_error("pixels.resize_surface", err);
-            //         *control_flow = ControlFlow::Exit;
-            //         return;
-            //     }
-            // }
+            if let Some(size) = input.window_resized() {
+                // TODO: ???
+                error!("NEW size: {}x{}", size.width, size.height);
+                // if let Err(err) = pixels.resize_surface(size.width, size.height) {
+                //     log_error("pixels.resize_surface", err);
+                //     *control_flow = ControlFlow::Exit;
+                //     return;
+                // }
+            }
 
             winit_window.request_redraw();
         }
