@@ -1,5 +1,8 @@
 // TODO: REWORK THIS FILE
 
+// TODO: name this example "performance test"?
+
+use std::collections::VecDeque;
 use std::rc::Rc;
 
 // use error_iter::ErrorIter as _;
@@ -116,23 +119,41 @@ trait GameApp {
 }
 
 struct DrawApi {
+    deque: VecDeque<DrawCmd>,
     pixels: Pixels,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+enum DrawCmd {
+    Fill([u8; 4]),
+    SetPx(usize, [u8; 4]),
 }
 
 impl DrawApi {
     fn fill(&mut self, color: [u8; 4]) {
-        let screen = self.pixels.frame_mut();
-        for pix in screen.chunks_exact_mut(4) {
-            pix.copy_from_slice(&color);
-        }
+        self.deque.push_back(DrawCmd::Fill(color));
     }
 
     fn set_px(&mut self, target: usize, color: [u8; 4]) {
-        let screen = self.pixels.frame_mut();
-        screen[target * 4] = color[0];
-        screen[target * 4 + 1] = color[1];
-        screen[target * 4 + 2] = color[2];
-        screen[target * 4 + 3] = color[3];
+        self.deque.push_back(DrawCmd::SetPx(target, color));
+    }
+
+    fn execute(&mut self, cmd: DrawCmd) {
+        match cmd {
+            DrawCmd::Fill(color) => {
+                let screen = self.pixels.frame_mut();
+                for pix in screen.chunks_exact_mut(4) {
+                    pix.copy_from_slice(&color);
+                }
+            },
+            DrawCmd::SetPx(target, color) => {
+                let screen = self.pixels.frame_mut();
+                screen[target * 4] = color[0];
+                screen[target * 4 + 1] = color[1];
+                screen[target * 4 + 2] = color[2];
+                screen[target * 4 + 3] = color[3];
+            },
+        }
     }
 
     fn render(&self) -> Result<(), pixels::Error> {
@@ -142,7 +163,10 @@ impl DrawApi {
 
 impl DrawApi {
     fn new(pixels: Pixels) -> Self {
-        Self { pixels }
+        Self {
+            pixels,
+            deque: VecDeque::new(),
+        }
     }
 }
 
@@ -268,8 +292,6 @@ async fn run<A: GameApp + 'static>() {
             accumulated_delta += now - prev_now;
             prev_now = now;
 
-            // web_sys::console::log_1(&format!(">>>>> ad {}", accumulated_update_delta).into());
-
             while accumulated_delta > EXPECTED_DELTA {
                 web_sys::console::log_1(&format!("> aUd {}", accumulated_delta).into());
                 if accumulated_delta > 2.0 * EXPECTED_DELTA {
@@ -280,6 +302,15 @@ async fn run<A: GameApp + 'static>() {
 
                 if accumulated_delta < 2.0 * EXPECTED_DELTA {
                     game_app.draw(&mut draw_api);
+
+                    while let Some(cmd) = draw_api.deque.pop_front() {
+                        draw_api.execute(cmd);
+                        // TODO: interleave drawing with updates to avoid delayed update after
+                        //       each long draw. For example count in the main update loop how many
+                        //       updates we need to perform, then perform them here. It might be
+                        //       important for avoiding collision logic issues etc.
+                    }
+
                     if let Err(err) = draw_api.render() {
                         log_error("pixels.render", err);
                         *control_flow = ControlFlow::Exit;
