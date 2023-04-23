@@ -63,6 +63,7 @@ all: build_example_tmp_debug build_example_tmp_release
 # targets for examples
 #
 
+# TODO: https://rustwasm.github.io/docs/book/game-of-life/code-size.html and https://rustwasm.github.io/docs/book/reference/code-size.html
 # TODO: [ERROR] Route /favicon.ico could not be found
 # TODO: move a lot of those shell commands to Cargo custom build scripts maybe?
 # TODO: rename this example package
