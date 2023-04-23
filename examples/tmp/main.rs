@@ -11,12 +11,7 @@ use wasm_bindgen::JsCast;
 #[cfg(debug_assertions)]
 use winit::event::VirtualKeyCode;
 use winit::platform::web::WindowBuilderExtWebSys;
-use winit::{
-    dpi::LogicalSize,
-    event::Event,
-    event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
-};
+use winit::{dpi::LogicalSize, event::Event, event_loop::EventLoop, window::WindowBuilder};
 use winit_input_helper::WinitInputHelper;
 
 use beet_core::BeetCore;
@@ -205,6 +200,7 @@ async fn run<A: GameApp + 'static>() {
             .with_canvas(Some(canvas))
             // Argument for a `false` below: otherwise Cmd+Opt+I doesn't open dev tools when focused on the <canvas>
             .with_prevent_default(false)
+            .with_focusable(true)
             .build(&event_loop)
             .expect("should build a winit window")
     };
@@ -303,7 +299,7 @@ async fn run<A: GameApp + 'static>() {
 
                     if let Err(err) = pixels.render() {
                         error!("failed to render pixels: {}", err.to_string());
-                        *control_flow = ControlFlow::Exit;
+                        control_flow.set_exit();
                         return;
                     }
                 } else {
@@ -321,7 +317,7 @@ async fn run<A: GameApp + 'static>() {
             // This allows to stop the game in a browser just by pressing Esc
             #[cfg(debug_assertions)]
             if input.key_pressed(VirtualKeyCode::Escape) {
-                *control_flow = ControlFlow::Exit;
+                control_flow.set_exit();
                 return;
             }
 
@@ -339,7 +335,7 @@ async fn run<A: GameApp + 'static>() {
             if let Some(size) = input.window_resized() {
                 if let Err(err) = pixels.resize_surface(size.width, size.height) {
                     error!("failed to resize the surface: {}", err.to_string());
-                    *control_flow = ControlFlow::Exit;
+                    control_flow.set_exit();
                     return;
                 }
             }

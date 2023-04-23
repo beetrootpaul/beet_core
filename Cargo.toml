@@ -15,7 +15,6 @@ name = "tmp"
 
 [dependencies]
 
-# TODO: remove as much as possible
 [dev-dependencies]
 console_error_panic_hook = "0.1.7"
 # TODO: include in debug only due to size impact https://docs.rs/console_log/1.0.0/console_log/#code-size
@@ -24,28 +23,8 @@ log = "0.4.17"
 pixels = { version = "0.12.1", default-features = false }
 wasm-bindgen = { version = "0.2.84", default-features = false }
 wasm-bindgen-futures = "0.4.34"
-web-sys = { version = "0.3.61", default-features = false, features = ["NodeList"] }
+# All required web-sys features are provided already through a transitive dependency through `winit`,
+#   so here we only make sure nothing extra is added.
+web-sys = { version = "0.3.61", default-features = false }
 winit = { version = "0.28.3", default-features = false }
 winit_input_helper = "0.14.1"
-#byteorder = "1.4.3"
-# TODO:              Features:
-#             + std
-#             - i128
-#getrandom = { version = "0.2.9", features = ["js"] }
-# TODO:              Features:
-#             - compiler_builtins
-#             - core
-#             - custom
-#             - js
-#             - js-sys
-#             - rdrand
-#             - rustc-dep-of-std
-#             - std
-#             - test-in-browser
-#             - wasm-bindgen
-#line_drawing = "1.0.0"
-#randomize = "3.0.1"
-# TODO:              Features:
-#             - rand_core
-#             - serde
-
